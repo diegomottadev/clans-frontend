@@ -1,70 +1,102 @@
-# Getting Started with Create React App
+# Clans View - Instituto Clans
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend del sistema de gestión educativa **Instituto Clans**, una aplicación web para administrar estudiantes, cursos, pagos, evaluaciones, asistencias y más.
 
-## Available Scripts
+## Tecnologías
 
-In the project directory, you can run:
+- **React** 17 con React Router 5
+- **PrimeReact** 6.1.0 — componentes UI
+- **PrimeFlex** 2.0.0 — utilidades CSS
+- **FullCalendar** — calendario interactivo
+- **Chart.js** — gráficos y reportes
+- **Quill** — editor de texto enriquecido
+- **Axios** — cliente HTTP
+- **Sass** — preprocesador CSS
 
-### `npm start`
+## Módulos principales
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+| Módulo | Descripción |
+|---|---|
+| Estudiantes | Alta, baja y modificación de alumnos |
+| Docentes | Gestión de profesores |
+| Cursos | Administración de cursos por idioma y nivel |
+| Evaluaciones | Creación y seguimiento de evaluaciones |
+| Asistencias | Control de asistencia |
+| Pagos | Costos fijos, pagos a docentes, cuotas e intereses |
+| Reportes | Analíticas de asistencia, pagos, inscripciones y más |
+| Calendario | Vista de clases y eventos |
+| Configuración | Idiomas, niveles, tipos de curso, aulas, horarios, usuarios |
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Requisitos previos
 
-### `npm test`
+- [Node.js](https://nodejs.org/) (v14 o superior recomendado)
+- npm o yarn
+- Backend de Instituto Clans corriendo (API REST)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Instalación
 
-### `npm run build`
+```bash
+git clone https://github.com/tu-usuario/clans-view.git
+cd clans-view
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Variables de entorno
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Crear un archivo `.env.development` en la raíz del proyecto:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```env
+REACT_APP_BASE_URL=http://localhost:8080
+PUBLIC_URL=http://localhost:8080
+```
 
-### `npm run eject`
+Para producción, crear `.env.production`:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```env
+REACT_APP_BASE_URL=https://tu-api.dominio.com
+PUBLIC_URL=
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Scripts disponibles
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```bash
+npm start       # Inicia el servidor de desarrollo en http://localhost:3000
+npm run build   # Genera el build de producción en /build
+npm test        # Ejecuta los tests
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Estructura del proyecto
 
-## Learn More
+```
+src/
+├── components/     # Componentes reutilizables
+├── helpers/        # Autenticación y configuración de API
+├── layout/         # Estilos globales (Sass) e íconos
+├── pages/          # Páginas organizadas por módulo
+│   ├── students/
+│   ├── teachers/
+│   ├── courses/
+│   ├── evaluations/
+│   ├── assistances/
+│   ├── payments/
+│   ├── reports/
+│   ├── calendar/
+│   └── ...
+└── App.js          # Layout principal, rutas y navegación
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Características destacadas
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Control de acceso por roles** — menús diferenciados para administrador y usuario
+- **Autenticación JWT** — token almacenado en localStorage con interceptor Axios
+- **Tablas con carga lazy** — paginación eficiente con DataTable de PrimeReact
+- **Localización en español** — calendarios, formatos de fecha y UI en español
+- **Diseño responsive** — adaptado para escritorio y dispositivos móviles
 
-### Code Splitting
+## Capturas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+<!-- Agrega capturas de pantalla aquí si lo deseas -->
 
-### Analyzing the Bundle Size
+## Licencia
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Este proyecto es privado y de uso interno.
