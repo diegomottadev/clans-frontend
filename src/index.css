@@ -1,0 +1,129 @@
+.L--center {
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.Loading {
+  margin: 0 auto;
+  width: 70px;
+  text-align: center;
+}
+.Loading > div {
+  width: 18px;
+  height: 18px;
+  background-color: #333;
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s ease-in-out infinite both;
+  animation: sk-bouncedelay 1.4s ease-in-out infinite both;
+}
+.Loading .Loading__dot-1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+.Loading .Loading__dot-2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+
+@-webkit-keyframes sk-bouncedelay {
+  0%,
+  80%,
+  to {
+    -webkit-transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+  }
+}
+@keyframes sk-bouncedelay {
+  0%,
+  80%,
+  to {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+
+.p-menubar-background{
+  background: linear-gradient(to right, #0388E5 0%, #07BDF4 100%);
+}
+
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-link .p-menuitem-text {
+  color: white !important;
+}
+.p-menubar .p-menuitem-link:not(.p-disabled):hover .p-menuitem-text {
+  color: black !important;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem.p-menuitem-active > .p-menuitem-link, .p-menubar .p-menubar-root-list > .p-menuitem.p-menuitem-active > .p-menuitem-link:not(.p-disabled):hover {
+  background: transparent;
+}
+
+@media screen and (max-width: 960px){
+  .p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-link .p-menuitem-text {
+    color: black !important;
+  }
+}
+
+/* ============================
+   Botón Generar PDF - Profesional
+   ============================ */
+.btn-pdf {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 0.6rem 1.25rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.35);
+  transition: all 0.25s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.btn-pdf:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c82333 0%, #b21f2d 100%) !important;
+  box-shadow: 0 4px 14px rgba(220, 53, 69, 0.45) !important;
+  transform: translateY(-1px);
+}
+.btn-pdf:active:not(:disabled) {
+  transform: translateY(0px);
+  box-shadow: 0 1px 4px rgba(220, 53, 69, 0.3) !important;
+}
+.btn-pdf:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+  box-shadow: 0 1px 4px rgba(108, 117, 125, 0.25);
+  cursor: not-allowed;
+  opacity: 0.85 !important;
+}
+.btn-pdf .p-button-icon {
+  font-size: 1rem !important;
+}
+.btn-pdf .pi-spin {
+  margin-right: 0.25rem;
+}
+
+/* Spinner dentro del botón PDF */
+.btn-pdf-spinner {
+  display: inline-flex;
+  align-items: center;
+}
+.btn-pdf-spinner .p-progress-spinner {
+  width: 16px !important;
+  height: 16px !important;
+}
+.btn-pdf-spinner .p-progress-spinner-svg .p-progress-spinner-circle {
+  stroke: #fff !important;
+}
