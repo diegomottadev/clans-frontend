@@ -598,6 +598,7 @@ export default function Invoice() {
                                     <Column field="studentCourse.course.nombre"  header="Curso"></Column>
                                     <Column field="dateIssue"  header="Fecha de emisión"></Column>
                                     <Column field="month"  header="Mes"></Column>
+                                    <Column field="fee" header="Monto" body={priceBodyTemplate}></Column>
                             </DataTable>
                             :""
                     }

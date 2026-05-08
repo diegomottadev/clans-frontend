@@ -120,9 +120,10 @@ export default function CalendarDashboardPage() {
         async function loadCalendar() {
             try {
                 setLoading(true);
-                const start = startDateFilter ? formatDate(new Date(startDateFilter)) : dateRange.start;
-                const end = endDateFilter ? formatDate(new Date(endDateFilter)) : (startDateFilter ? '2099-12-31' : dateRange.end);
-                let url = `${BASE_URL}/api/calendar?start_date=${start}&end_date=${end}`;
+                // Siempre usar el rango visible del calendario (dateRange),
+                // que se actualiza al navegar entre semanas/meses via datesRender.
+                // startDateFilter/endDateFilter solo navegan el calendario, no restringen la API.
+                let url = `${BASE_URL}/api/calendar?start_date=${dateRange.start}&end_date=${dateRange.end}`;
                 if (languajeFilter) url += `&language_id=${languajeFilter}`;
                 if (courseFilter) url += `&course_id=${courseFilter}`;
                 if (teacherFilter) url += `&teacher_id=${teacherFilter}`;
@@ -144,7 +145,7 @@ export default function CalendarDashboardPage() {
         }
         loadCalendar();
         return () => { cancelled = true; };
-    }, [dateRange, languajeFilter, courseFilter, teacherFilter, classroomFilter, startDateFilter, endDateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dateRange, languajeFilter, courseFilter, teacherFilter, classroomFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // FullCalendar options
     const calendarOptions = {
@@ -158,6 +159,14 @@ export default function CalendarDashboardPage() {
         },
         locale: 'es',
         firstDay: 1,
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día',
+        },
+        titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+        columnHeaderFormat: { weekday: 'short', day: 'numeric', month: 'numeric' },
         slotMinTime: '07:00:00',
         slotMaxTime: '22:00:00',
         allDaySlot: false,

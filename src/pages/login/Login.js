@@ -12,6 +12,7 @@ export default function Login({login,mostrarError}){
         username: '',
     })
     const [loginError, setLoginError] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     function handleInputChange(e){
         setLoginError(null);
@@ -21,6 +22,7 @@ export default function Login({login,mostrarError}){
     async function handleSubmit(e){
         e.preventDefault();
         setLoginError(null);
+        setLoading(true);
         try {
             await login(usuario.email,usuario.password);
         }
@@ -32,6 +34,8 @@ export default function Login({login,mostrarError}){
             } else {
                 setLoginError('Ocurrió un error al iniciar sesión. Intente nuevamente.');
             }
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -60,7 +64,14 @@ export default function Login({login,mostrarError}){
                             {loginError && (
                                 <Message severity="error" text={loginError} className="p-mb-3 p-d-block" />
                             )}
-                            <Button type="submit" label="Ingresar" className="p-mt-2" />
+                            {loading ? (
+                                <button type="submit" disabled className="p-button p-component p-mt-2" style={{ width: '100%', justifyContent: 'center' }}>
+                                    <i className="pi pi-spin pi-spinner" style={{ marginRight: '6px' }} />
+                                    <span className="p-button-label">Ingresando...</span>
+                                </button>
+                            ) : (
+                                <Button type="submit" label="Ingresar" className="p-mt-2" />
+                            )}
                         </form>
                     </div>
                 </Panel>

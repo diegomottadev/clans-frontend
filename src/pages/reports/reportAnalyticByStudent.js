@@ -267,7 +267,10 @@ export default function ReportAnalyticByStudent() {
                 method: 'GET',
                 responseType: 'blob', // Important
             }).then((response) => {
-                FileDownload(response.data, 'informe-analitico.pdf');
+                const disposition = response.headers['content-disposition'] || '';
+                const match = disposition.match(/filename="?([^"]+)"?/);
+                const filename = match ? match[1] : 'Analitico.pdf';
+                FileDownload(response.data, filename);
                 setDownload(false);
             }).catch((error) => {
                 toast.current.show({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al cargar los datos para el informe analítico del alumno', life: 3000 });

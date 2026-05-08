@@ -33,8 +33,9 @@ export default function Debtor() {
     const [prevYearData, setPrevYearData] = useState(null);
     const [studentFilter, setStudentFilter] = useState('');
 
-    // Ciclo lectivo: marzo a diciembre
+    // Ciclo lectivo: enero a diciembre
     const monthOptions = [
+        { label: 'Enero', value: 1 }, { label: 'Febrero', value: 2 },
         { label: 'Marzo', value: 3 }, { label: 'Abril', value: 4 },
         { label: 'Mayo', value: 5 }, { label: 'Junio', value: 6 },
         { label: 'Julio', value: 7 }, { label: 'Agosto', value: 8 },

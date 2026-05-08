@@ -94,7 +94,7 @@ export default function Student() {
     const [selectedRow, setSelectedRow] = useState(null);
     const [schoolYear, setSchoolYear] = useState(null);
     const [schoolYears, setSchoolYears] = useState(null);
-    const [statusFilter, setStatusFilter] = useState(1);
+    const [statusFilter, setStatusFilter] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
     const [languajes, setLanguajes] = useState(null);
     const [languajeFilter, setLanguajeFilter] = useState(null);

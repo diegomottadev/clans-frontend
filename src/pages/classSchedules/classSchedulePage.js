@@ -52,6 +52,13 @@ export default function ClassSchedulePage() {
     const [teachers, setTeachers] = useState(null);
     const [classrooms, setClassrooms] = useState(null);
 
+    // Filtros
+    const [filterCourse, setFilterCourse] = useState(null);
+    const [filterTeacher, setFilterTeacher] = useState(null);
+    const [filterClassroom, setFilterClassroom] = useState(null);
+    const [filterDateFrom, setFilterDateFrom] = useState(null);
+    const [filterDateTo, setFilterDateTo] = useState(null);
+
     const toast = useRef(null);
     const dt = useRef(null);
     const font = { fontFamily: "'Inter', 'Segoe UI', sans-serif" };
@@ -76,12 +83,24 @@ export default function ClassSchedulePage() {
 
     useEffect(() => {
         loadData();
-    }, [lazyParams]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [lazyParams, filterCourse, filterTeacher, filterClassroom, filterDateFrom, filterDateTo]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const formatDateForFilter = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    };
 
     async function loadData() {
         try {
             setLoadingDatatable(true);
-            const { data: { data: result } } = await axios.get(`${BASE_URL}/api/classSchedules?page=${lazyParams.page + 1}`);
+            let url = `${BASE_URL}/api/classSchedules?page=${lazyParams.page + 1}`;
+            if (filterCourse) url += `&course_id=${filterCourse}`;
+            if (filterTeacher) url += `&teacher_id=${filterTeacher}`;
+            if (filterClassroom) url += `&classroom_id=${filterClassroom}`;
+            if (filterDateFrom) url += `&date_from=${formatDateForFilter(filterDateFrom)}`;
+            if (filterDateTo) url += `&date_to=${formatDateForFilter(filterDateTo)}`;
+            const { data: { data: result } } = await axios.get(url);
             setClasses(result.data);
             setTotalRecords(result.meta.pagination.total);
         } catch (err) {
@@ -92,7 +111,15 @@ export default function ClassSchedulePage() {
         }
     }
 
-    const onPage = (event) => setLazyParams({ ...lazyParams, ...event });
+    const onPage = (event) => setLazyParams({ first: event.first, rows: event.rows, page: event.page });
+
+    const clearFilters = () => {
+        setFilterCourse(null);
+        setFilterTeacher(null);
+        setFilterClassroom(null);
+        setFilterDateFrom(null);
+        setFilterDateTo(null);
+    };
 
     const openNew = () => { setClassItem(emptyClass); setSubmitted(false); setClassDialog(true); };
     const hideDialog = () => { setSubmitted(false); setClassDialog(false); };
@@ -265,8 +292,47 @@ export default function ClassSchedulePage() {
                 <div className="card" style={{ borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: 'none' }}>
                     <Toast ref={toast} />
 
-                    <div className="p-d-flex p-jc-between p-ai-center p-mb-4" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div className="p-d-flex p-jc-between p-ai-center p-mb-3" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                         <Button label="Nueva clase" icon="pi pi-plus" className="p-button-success" onClick={openNew} style={{ borderRadius: 8 }} />
+                        <Button label="Limpiar filtros" icon="pi pi-filter-slash" className="p-button-outlined p-button-secondary" onClick={clearFilters} style={{ borderRadius: 8 }} />
+                    </div>
+
+                    {/* Filtros */}
+                    <div className="p-fluid p-formgrid p-grid p-mb-3">
+                        <div className="p-field p-col-12 p-md-2">
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#495057', ...font }}>Fecha desde</label>
+                            <Calendar appendTo={document.body} value={filterDateFrom}
+                                onChange={e => { setFilterDateFrom(e.target.value || null); setLazyParams(p => ({ ...p, first: 0, page: 0 })); }}
+                                locale="es" dateFormat="dd/mm/yy" showClear placeholder="Desde..." />
+                        </div>
+                        <div className="p-field p-col-12 p-md-2">
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#495057', ...font }}>Fecha hasta</label>
+                            <Calendar appendTo={document.body} value={filterDateTo}
+                                onChange={e => { setFilterDateTo(e.target.value || null); setLazyParams(p => ({ ...p, first: 0, page: 0 })); }}
+                                locale="es" dateFormat="dd/mm/yy" showClear placeholder="Hasta..."
+                                minDate={filterDateFrom || undefined} />
+                        </div>
+                        <div className="p-field p-col-12 p-md-3">
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#495057', ...font }}>Curso</label>
+                            <Dropdown appendTo={document.body} value={filterCourse}
+                                onChange={e => { setFilterCourse(e.value ?? null); setLazyParams(p => ({ ...p, first: 0, page: 0 })); }}
+                                options={courses} optionLabel="nameYear" optionValue="id"
+                                filter showClear filterBy="nameYear" placeholder="-- Todos --" />
+                        </div>
+                        <div className="p-field p-col-12 p-md-3">
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#495057', ...font }}>Docente</label>
+                            <Dropdown appendTo={document.body} value={filterTeacher}
+                                onChange={e => { setFilterTeacher(e.value ?? null); setLazyParams(p => ({ ...p, first: 0, page: 0 })); }}
+                                options={teachers} optionLabel="apellido_nombre_completo" optionValue="id"
+                                filter showClear filterBy="apellido_nombre_completo" placeholder="-- Todos --" />
+                        </div>
+                        <div className="p-field p-col-12 p-md-2">
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#495057', ...font }}>Aula</label>
+                            <Dropdown appendTo={document.body} value={filterClassroom}
+                                onChange={e => { setFilterClassroom(e.value ?? null); setLazyParams(p => ({ ...p, first: 0, page: 0 })); }}
+                                options={classrooms} optionLabel="name" optionValue="id"
+                                filter showClear filterBy="name" placeholder="-- Todas --" />
+                        </div>
                     </div>
 
                     <DataTable ref={dt} value={classes} lazy paginator first={lazyParams.first} rows={10}
