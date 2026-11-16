@@ -1,0 +1,242 @@
+import React, { useEffect, useState } from 'react';
+import Axios from 'axios';
+import { InputText } from 'primereact/inputtext';
+import { Button } from 'primereact/button';
+import { BASE_URL } from '../../helpers/BaseUrl';
+import { apiErrorMessage } from '../../helpers/apiErrors';
+import { validateAvatarFile } from '../../helpers/avatarFile';
+import { useAvatarUrl } from '../../components/UserMenu';
+
+const EMPTY_TEACHER = { firstName: '', lastName: '', dni: '', telphone: '', celphone: '', email: '', address: '' };
+const EMPTY_PASSWORDS = { current_password: '', password: '', password_confirmation: '' };
+
+const TEACHER_FIELDS = [
+    ['firstName', 'Nombre'],
+    ['lastName', 'Apellido'],
+    ['dni', 'DNI'],
+    ['telphone', 'Teléfono'],
+    ['celphone', 'Celular'],
+    ['email', 'Email de contacto'],
+    ['address', 'Domicilio'],
+];
+
+const cardStyle = { borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: 'none' };
+
+/**
+ * "Mi cuenta": el usuario logueado ve y edita sus datos. El email de ingreso se muestra
+ * deshabilitado y nunca se envía (además el backend rechaza cualquier cambio).
+ * onProfileChange(data) actualiza el usuario del layout (nombre y foto del topbar).
+ */
+export default function MyAccountPage({ onProfileChange }) {
+    const [account, setAccount] = useState(null);
+    const [loadError, setLoadError] = useState(null);
+    const [name, setName] = useState('');
+    const [teacher, setTeacher] = useState(EMPTY_TEACHER);
+    const [passwords, setPasswords] = useState(EMPTY_PASSWORDS);
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState(null);
+    const [formOk, setFormOk] = useState(null);
+
+    const [file, setFile] = useState(null);
+    const [preview, setPreview] = useState(null);
+    const [avatarBusy, setAvatarBusy] = useState(false);
+    const [avatarError, setAvatarError] = useState(null);
+    const currentAvatar = useAvatarUrl(!!account?.has_avatar, account?.avatar_version);
+
+    const applyAccount = (data) => {
+        setAccount(data);
+        setName(data.name || '');
+        setTeacher(data.teacher ? { ...EMPTY_TEACHER, ...data.teacher } : EMPTY_TEACHER);
+    };
+
+    useEffect(() => {
+        Axios.get(`${BASE_URL}/api/me`)
+            .then(({ data }) => applyAccount(data.data))
+            .catch((e) => setLoadError(apiErrorMessage(e, 'No se pudieron cargar sus datos.')));
+    }, []);
+
+    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+    const notify = (data) => {
+        applyAccount(data);
+        if (onProfileChange) onProfileChange(data);
+    };
+
+    const onSave = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        setFormError(null);
+        setFormOk(null);
+
+        const changingPassword = passwords.password !== '' || passwords.current_password !== '';
+        if (changingPassword) {
+            if (!passwords.current_password) return setFormError('Ingrese su contraseña actual.');
+            if (passwords.password.length < 8) return setFormError('La nueva contraseña debe tener al menos 8 caracteres.');
+            if (passwords.password !== passwords.password_confirmation) return setFormError('Las contraseñas nuevas no coinciden.');
+        }
+
+        const body = { name };
+        if (account.teacher) {
+            body.teacher = TEACHER_FIELDS.reduce((acc, [key]) => ({ ...acc, [key]: teacher[key] || null }), {});
+        }
+        if (changingPassword) Object.assign(body, passwords);
+
+        setSaving(true);
+        try {
+            const { data } = await Axios.put(`${BASE_URL}/api/me`, body);
+            notify(data.data);
+            setPasswords(EMPTY_PASSWORDS);
+            setFormOk(changingPassword ? 'Datos guardados y contraseña actualizada.' : 'Datos guardados.');
+        } catch (err) {
+            setFormError(apiErrorMessage(err, 'No se pudieron guardar los cambios.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const onPickFile = (e) => {
+        const picked = e.target.files && e.target.files[0];
+        setAvatarError(null);
+        const problem = validateAvatarFile(picked);
+        if (problem) {
+            setFile(null);
+            setPreview(null);
+            setAvatarError(problem);
+            e.target.value = '';
+            return;
+        }
+        setFile(picked);
+        setPreview(URL.createObjectURL(picked));
+    };
+
+    const onUpload = async () => {
+        if (!file) return;
+        setAvatarBusy(true);
+        setAvatarError(null);
+        const form = new FormData();
+        form.append('avatar', file);
+        try {
+            const { data } = await Axios.post(`${BASE_URL}/api/me/avatar`, form);
+            setFile(null);
+            setPreview(null);
+            notify(data.data);
+        } catch (err) {
+            setAvatarError(apiErrorMessage(err, 'No se pudo subir la foto.'));
+        } finally {
+            setAvatarBusy(false);
+        }
+    };
+
+    const onRemove = async () => {
+        setAvatarBusy(true);
+        setAvatarError(null);
+        try {
+            const { data } = await Axios.delete(`${BASE_URL}/api/me/avatar`);
+            notify(data.data);
+        } catch (err) {
+            setAvatarError(apiErrorMessage(err, 'No se pudo quitar la foto.'));
+        } finally {
+            setAvatarBusy(false);
+        }
+    };
+
+    if (loadError) {
+        return <div className="card" role="alert">{loadError}</div>;
+    }
+    if (!account) {
+        return <div className="card">Cargando...</div>;
+    }
+
+    const shown = preview || currentAvatar;
+
+    return (
+        <div className="p-grid my-account">
+            <div className="p-col-12">
+                <div className="p-d-flex p-ai-center p-mb-3" style={{ gap: '1rem' }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, background: 'linear-gradient(135deg, #3ab54a, #1a5c25)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(58,181,74,0.35)' }}>
+                        <i className="pi pi-id-card" style={{ color: '#fff', fontSize: '1.4rem' }} />
+                    </div>
+                    <div>
+                        <h2 className="p-m-0" style={{ color: '#1a3320', fontWeight: 800, fontSize: '1.45rem', lineHeight: 1.2 }}>Mi cuenta</h2>
+                        <p className="p-m-0" style={{ color: '#6c757d', fontSize: '0.875rem' }}>Sus datos y foto de perfil</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-col-12 p-md-4">
+                <div className="card my-account-photo" style={cardStyle}>
+                    <h5>Foto de perfil</h5>
+                    <div className="my-account-avatar">
+                        {shown
+                            ? <img src={shown} alt={preview ? 'Vista previa' : 'Foto de perfil'} />
+                            : <i className="pi pi-user" aria-hidden="true" />}
+                    </div>
+                    <label htmlFor="avatar-file" className="p-button p-button-outlined p-button-sm my-account-pick">
+                        <i className="pi pi-camera" aria-hidden="true" /> <span>Elegir imagen</span>
+                    </label>
+                    <input id="avatar-file" type="file" accept="image/jpeg,image/png" aria-label="Elegir foto"
+                        className="my-account-file" onChange={onPickFile} />
+                    <small className="my-account-hint">JPG o PNG, hasta 2 MB. Se recorta en cuadrado.</small>
+                    {avatarError && <small className="p-error my-account-msg" role="alert">{avatarError}</small>}
+                    <div className="my-account-photo-actions">
+                        {file && <Button type="button" label="Subir foto" icon="pi pi-upload" onClick={onUpload} disabled={avatarBusy} />}
+                        {!file && account.has_avatar && (
+                            <Button type="button" label="Quitar foto" icon="pi pi-trash" className="p-button-outlined p-button-danger" onClick={onRemove} disabled={avatarBusy} />
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-col-12 p-md-8">
+                <form className="card p-fluid" style={cardStyle} onSubmit={onSave} noValidate>
+                    <h5>Datos de la cuenta</h5>
+                    <div className="p-formgrid p-grid">
+                        <div className="p-field p-col-12 p-md-6">
+                            <label htmlFor="acc-email">Email de ingreso</label>
+                            <InputText id="acc-email" value={account.email} readOnly disabled />
+                            <small className="my-account-hint">El email de ingreso no se puede modificar.</small>
+                        </div>
+                        <div className="p-field p-col-12 p-md-6">
+                            <label htmlFor="acc-name">Nombre de usuario</label>
+                            <InputText id="acc-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {account.teacher && (
+                        <>
+                            <h5>Datos personales</h5>
+                            <div className="p-formgrid p-grid">
+                                {TEACHER_FIELDS.map(([key, label]) => (
+                                    <div className="p-field p-col-12 p-md-6" key={key}>
+                                        <label htmlFor={`acc-t-${key}`}>{label}</label>
+                                        <InputText id={`acc-t-${key}`} value={teacher[key] || ''}
+                                            type={key === 'email' ? 'email' : 'text'}
+                                            onChange={(e) => setTeacher({ ...teacher, [key]: e.target.value })} />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    <h5><i className="pi pi-lock" aria-hidden="true" /> Cambiar contraseña <small className="my-account-hint">(opcional)</small></h5>
+                    <div className="p-formgrid p-grid">
+                        {[['current_password', 'Contraseña actual', 'current-password'],
+                          ['password', 'Nueva contraseña', 'new-password'],
+                          ['password_confirmation', 'Repetir nueva contraseña', 'new-password']].map(([key, label, ac]) => (
+                            <div className="p-field p-col-12 p-md-4" key={key}>
+                                <label htmlFor={`acc-${key}`}>{label}</label>
+                                <InputText id={`acc-${key}`} type="password" autoComplete={ac} value={passwords[key]}
+                                    onChange={(e) => setPasswords({ ...passwords, [key]: e.target.value })} />
+                            </div>
+                        ))}
+                    </div>
+
+                    {formError && <div className="p-error my-account-msg" role="alert">{formError}</div>}
+                    {formOk && <div className="my-account-ok" role="status">{formOk}</div>}
+                    <div className="my-account-actions">
+                        <Button type="submit" label="Guardar cambios" icon="pi pi-save" disabled={saving} />
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

@@ -56,6 +56,8 @@ import FixStudentNamesPage from './pages/settings/fixStudentNamesPage';
 import ClassroomPage from './pages/classrooms/classroomPage';
 import ClassSchedulePage from './pages/classSchedules/classSchedulePage';
 import CalendarDashboardPage from './pages/calendar/calendarDashboardPage';
+import MyAccountPage from './pages/account/myAccountPage';
+import UserMenu from './components/UserMenu';
 
 /* npm uninstall node-sass
 npm install sass */
@@ -128,6 +130,16 @@ export default function App() {
         window.location.href = `${window.location.protocol}//${window.location.host}/#/`;
     }
 
+    // "Mi cuenta" guardó cambios: refrescar nombre y foto del topbar
+    function actualizarPerfil(datos) {
+        setUsuario(prev => ({
+            ...prev,
+            name: datos.name,
+            has_avatar: datos.has_avatar,
+            avatar_version: datos.avatar_version,
+        }));
+    }
+
     function mostrarError(mensaje) {
         //alert();
         setError(mensaje);
@@ -167,8 +179,8 @@ export default function App() {
         <Router>
             {/* <Nav usuario={usuario}/> */}
             <Error mensaje={error}  />
-            { usuario !== null && usuario.role === 'admin' &&  (<LoginRoute mostrarError={mostrarError} usuario={usuario} logout={logout} />) }
-            { usuario !== null && usuario.role === 'user' &&  (<LoginRouteUser mostrarError={mostrarError} usuario={usuario} logout={logout} />) }
+            { usuario !== null && usuario.role === 'admin' &&  (<LoginRoute mostrarError={mostrarError} usuario={usuario} logout={logout} actualizarPerfil={actualizarPerfil} />) }
+            { usuario !== null && usuario.role === 'user' &&  (<LoginRouteUser mostrarError={mostrarError} usuario={usuario} logout={logout} actualizarPerfil={actualizarPerfil} />) }
         </Router>
     );
 
@@ -291,7 +303,7 @@ function SidebarMenu({ items, onNavigate, collapsed }) {
     );
 }
 
-function AppLayout({ menuItems, usuario, children }) {
+function AppLayout({ menuItems, usuario, onAccount, onLogout, children }) {
     // Desktop: 'expanded' | 'collapsed'. Mobile: overlay toggle.
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -340,8 +352,7 @@ function AppLayout({ menuItems, usuario, children }) {
                     </button>
                     <YearAcademic />
                     <div className="app-topbar-right">
-                        <i className="pi pi-user" />
-                        <span>{usuario?.name}</span>
+                        <UserMenu usuario={usuario} onAccount={onAccount} onLogout={onLogout} />
                     </div>
                 </header>
                 <div className="app-content">
@@ -352,7 +363,7 @@ function AppLayout({ menuItems, usuario, children }) {
     );
 }
 
-function LoginRoute({ mostrarError, usuario, logout }) {
+function LoginRoute({ mostrarError, usuario, logout, actualizarPerfil }) {
     const history = useHistory();
     const nav = (path) => history.push(path);
 
@@ -420,8 +431,9 @@ function LoginRoute({ mostrarError, usuario, logout }) {
     ];
 
     return (
-        <AppLayout menuItems={nestedMenuitems} usuario={usuario}>
+        <AppLayout menuItems={nestedMenuitems} usuario={usuario} onAccount={() => nav('/mi-cuenta')} onLogout={logout}>
             <Switch>
+                <Route path="/mi-cuenta" render={props => <MyAccountPage {...props} onProfileChange={actualizarPerfil} />}></Route>
                 <Route path="/levels"><Level/></Route>
                 <Route path="/languajes" render={props => <Languaje {...props} usuario={usuario} />}></Route>
                 <Route path="/types-courses" render={props => <TypeCourse {...props} usuario={usuario} />}></Route>
@@ -458,7 +470,7 @@ function LoginRoute({ mostrarError, usuario, logout }) {
     );
 }
 
-function LoginRouteUser({ mostrarError, usuario, logout }) {
+function LoginRouteUser({ mostrarError, usuario, logout, actualizarPerfil }) {
     const history = useHistory();
     const nav = (path) => history.push(path);
 
@@ -480,8 +492,9 @@ function LoginRouteUser({ mostrarError, usuario, logout }) {
     ];
 
     return (
-        <AppLayout menuItems={nestedMenuitemsUser} usuario={usuario}>
+        <AppLayout menuItems={nestedMenuitemsUser} usuario={usuario} onAccount={() => nav('/mi-cuenta')} onLogout={logout}>
             <Switch>
+                <Route path="/mi-cuenta" render={props => <MyAccountPage {...props} onProfileChange={actualizarPerfil} />}></Route>
                 <Route path="/courses" render={props => <Course {...props} usuario={usuario} />}></Route>
                 <Route path="/evaluations" render={props => <Evaluation {...props} usuario={usuario} />}></Route>
                 <Route path="/assistances" render={props => <Assistance {...props} usuario={usuario} />}></Route>

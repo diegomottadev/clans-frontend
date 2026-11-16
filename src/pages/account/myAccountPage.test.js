@@ -1,0 +1,174 @@
+import '@testing-library/jest-dom';
+
+jest.mock('axios');
+jest.mock('../../helpers/BaseUrl', () => ({ BASE_URL: 'http://api.test' }));
+jest.mock('primereact/inputtext', () => ({ InputText: (props) => <input {...props} /> }));
+jest.mock('primereact/button', () => ({
+    Button: ({ label, onClick, disabled, type, icon, className }) => (
+        <button type={type || 'button'} onClick={onClick} disabled={disabled} className={className}>{label}</button>
+    ),
+}));
+
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import axios from 'axios';
+import MyAccountPage from './myAccountPage';
+
+const me = (extra = {}) => ({
+    id: 7, name: 'Profe Ana', email: 'ana@clans.com', role: 'user', has_avatar: false, avatar_version: null,
+    teacher: { id: 3, firstName: 'Ana', lastName: 'Pérez', dni: '30111222', telphone: '4111', celphone: '351555', email: 'ana@contacto.com', address: 'Calle 1' },
+    ...extra,
+});
+
+beforeEach(() => {
+    jest.clearAllMocks();
+    global.URL.createObjectURL = jest.fn(() => 'blob:preview');
+    global.URL.revokeObjectURL = jest.fn();
+    axios.get.mockResolvedValue({ data: { data: me() } });
+});
+
+const renderPage = (props = {}) => render(<MyAccountPage onProfileChange={jest.fn()} {...props} />);
+
+describe('MyAccountPage', () => {
+    it('carga los datos del usuario y muestra el email de ingreso sin permitir editarlo', async () => {
+        renderPage();
+
+        const email = await screen.findByLabelText('Email de ingreso');
+        expect(axios.get).toHaveBeenCalledWith('http://api.test/api/me');
+        expect(email).toHaveValue('ana@clans.com');
+        expect(email).toHaveAttribute('readonly');
+        expect(email).toBeDisabled();
+        expect(screen.getByLabelText('Nombre de usuario')).toHaveValue('Profe Ana');
+        expect(screen.getByLabelText('Nombre')).toHaveValue('Ana');
+        expect(screen.getByLabelText('Apellido')).toHaveValue('Pérez');
+        expect(screen.getByLabelText('DNI')).toHaveValue('30111222');
+        expect(screen.getByLabelText('Domicilio')).toHaveValue('Calle 1');
+    });
+
+    it('si no tiene docente asociado no muestra la sección de datos personales', async () => {
+        axios.get.mockResolvedValue({ data: { data: me({ teacher: null }) } });
+        renderPage();
+
+        await screen.findByLabelText('Email de ingreso');
+        expect(screen.queryByLabelText('DNI')).not.toBeInTheDocument();
+    });
+
+    it('guarda con PUT /api/me sin enviar el email y avisa al layout', async () => {
+        const onProfileChange = jest.fn();
+        axios.put.mockResolvedValue({ data: { data: me({ name: 'Ana P.' }) } });
+        renderPage({ onProfileChange });
+
+        fireEvent.change(await screen.findByLabelText('Nombre de usuario'), { target: { value: 'Ana P.' } });
+        fireEvent.change(screen.getByLabelText('Celular'), { target: { value: '351999' } });
+        fireEvent.click(screen.getByText('Guardar cambios'));
+
+        await waitFor(() => expect(axios.put).toHaveBeenCalled());
+        const [url, body] = axios.put.mock.calls[0];
+        expect(url).toBe('http://api.test/api/me');
+        expect(body.name).toBe('Ana P.');
+        expect(body.teacher.celphone).toBe('351999');
+        expect(body).not.toHaveProperty('email');
+        expect(body).not.toHaveProperty('password');
+        expect(await screen.findByRole('status')).toHaveTextContent('Datos guardados');
+        expect(onProfileChange).toHaveBeenCalledWith(expect.objectContaining({ name: 'Ana P.' }));
+    });
+
+    it('muestra el mensaje de error del servidor', async () => {
+        axios.put.mockRejectedValue({ response: { status: 422, data: { name: ['El campo nombre es obligatorio.'] } } });
+        renderPage();
+
+        await screen.findByLabelText('Nombre de usuario');
+        fireEvent.click(screen.getByText('Guardar cambios'));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('El campo nombre es obligatorio.');
+    });
+
+    it('cambio de contraseña: valida mínimo 8 y confirmación antes de enviar', async () => {
+        renderPage();
+        await screen.findByLabelText('Nombre de usuario');
+
+        fireEvent.change(screen.getByLabelText('Contraseña actual'), { target: { value: 'vieja123' } });
+        fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'corta' } });
+        fireEvent.change(screen.getByLabelText('Repetir nueva contraseña'), { target: { value: 'corta' } });
+        fireEvent.click(screen.getByText('Guardar cambios'));
+        expect(await screen.findByRole('alert')).toHaveTextContent(/al menos 8/);
+
+        fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'NuevaClave99' } });
+        fireEvent.change(screen.getByLabelText('Repetir nueva contraseña'), { target: { value: 'OtraClave99' } });
+        fireEvent.click(screen.getByText('Guardar cambios'));
+        expect(await screen.findByRole('alert')).toHaveTextContent(/no coinciden/);
+        expect(axios.put).not.toHaveBeenCalled();
+    });
+
+    it('cambio de contraseña: envía la actual, la nueva y la confirmación y luego limpia los campos', async () => {
+        axios.put.mockResolvedValue({ data: { data: me() } });
+        renderPage();
+        await screen.findByLabelText('Nombre de usuario');
+
+        fireEvent.change(screen.getByLabelText('Contraseña actual'), { target: { value: 'vieja123' } });
+        fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'NuevaClave99' } });
+        fireEvent.change(screen.getByLabelText('Repetir nueva contraseña'), { target: { value: 'NuevaClave99' } });
+        fireEvent.click(screen.getByText('Guardar cambios'));
+
+        await waitFor(() => expect(axios.put).toHaveBeenCalled());
+        expect(axios.put.mock.calls[0][1]).toEqual(expect.objectContaining({
+            current_password: 'vieja123', password: 'NuevaClave99', password_confirmation: 'NuevaClave99',
+        }));
+        await waitFor(() => expect(screen.getByLabelText('Contraseña actual')).toHaveValue(''));
+    });
+
+    it('foto: rechaza en el cliente un archivo no permitido sin subirlo', async () => {
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+
+        fireEvent.change(input, { target: { files: [new File(['<?php'], 'x.gif', { type: 'image/gif' })] } });
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('JPG o PNG');
+        expect(screen.queryByText('Subir foto')).not.toBeInTheDocument();
+        expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    it('foto: muestra vista previa y la sube como multipart a /api/me/avatar', async () => {
+        const onProfileChange = jest.fn();
+        axios.post.mockResolvedValue({ data: { data: me({ has_avatar: true, avatar_version: 'v2' }) } });
+        renderPage({ onProfileChange });
+        const input = await screen.findByLabelText('Elegir foto');
+        const file = new File(['img'], 'yo.png', { type: 'image/png' });
+
+        fireEvent.change(input, { target: { files: [file] } });
+        expect(screen.getByAltText('Vista previa')).toHaveAttribute('src', 'blob:preview');
+        fireEvent.click(screen.getByText('Subir foto'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        const [url, body] = axios.post.mock.calls[0];
+        expect(url).toBe('http://api.test/api/me/avatar');
+        expect(body).toBeInstanceOf(FormData);
+        expect(body.get('avatar')).toBe(file);
+        await waitFor(() => expect(onProfileChange).toHaveBeenCalledWith(expect.objectContaining({ has_avatar: true, avatar_version: 'v2' })));
+    });
+
+    it('foto: muestra el error del servidor al subir', async () => {
+        axios.post.mockRejectedValue({ response: { status: 422, data: { avatar: ['La imagen debe ser JPG o PNG.'] } } });
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+
+        fireEvent.change(input, { target: { files: [new File(['img'], 'yo.jpg', { type: 'image/jpeg' })] } });
+        fireEvent.click(screen.getByText('Subir foto'));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('La imagen debe ser JPG o PNG.');
+    });
+
+    it('foto: "Quitar foto" llama a DELETE /api/me/avatar', async () => {
+        const onProfileChange = jest.fn();
+        axios.get.mockImplementation((url) => url.includes('/api/me/avatar')
+            ? Promise.resolve({ data: new Blob(['x']) })
+            : Promise.resolve({ data: { data: me({ has_avatar: true, avatar_version: 'v1' }) } }));
+        axios.delete.mockResolvedValue({ data: { data: me({ has_avatar: false }) } });
+        renderPage({ onProfileChange });
+
+        fireEvent.click(await screen.findByText('Quitar foto'));
+
+        await waitFor(() => expect(axios.delete).toHaveBeenCalledWith('http://api.test/api/me/avatar'));
+        await waitFor(() => expect(onProfileChange).toHaveBeenCalledWith(expect.objectContaining({ has_avatar: false })));
+    });
+});
