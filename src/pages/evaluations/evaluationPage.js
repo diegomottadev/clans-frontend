@@ -142,8 +142,6 @@ export default function EvalutionB() {
     }
 
     const onFilter = useDebouncedCallback((e) => {
-        console.log(event);
-
         const event = {filters:{
             name:{
                 value: e.target.value
@@ -151,6 +149,7 @@ export default function EvalutionB() {
         }};
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }, 400);
 

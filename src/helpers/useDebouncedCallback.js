@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { unstable_batchedUpdates } from 'react-dom';
 
 /**
  * Devuelve una función que ejecuta `fn` recién cuando pasan `delay` ms sin
@@ -14,6 +15,8 @@ export function useDebouncedCallback(fn, delay = 400) {
 
     return useMemo(() => (...args) => {
         clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => fnRef.current(...args), delay);
+        // React 17 no agrupa los setState dentro de un setTimeout: sin esto,
+        // dos setState en el callback provocan dos renders y dos peticiones.
+        timerRef.current = setTimeout(() => unstable_batchedUpdates(() => fnRef.current(...args)), delay);
     }, [delay]);
 }
