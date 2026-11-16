@@ -28,6 +28,12 @@ beforeEach(() => {
     // axios 0.19: cancelación con CancelToken (el automock devuelve undefined)
     axios.CancelToken = { source: jest.fn(() => ({ token: 'tok-1', cancel: jest.fn() })) };
     axios.isCancel = jest.fn(() => false);
+    // jsdom no decodifica imágenes: por defecto toda imagen "carga" bien
+    global.Image = class {
+        set src(v) { this._src = v; setTimeout(() => (global.__imageFails ? this.onerror && this.onerror() : this.onload && this.onload()), 0); }
+        get src() { return this._src; }
+    };
+    global.__imageFails = false;
 });
 
 const renderPage = (props = {}) => render(<MyAccountPage onProfileChange={jest.fn()} {...props} />);
@@ -261,5 +267,31 @@ describe('MyAccountPage - progreso de subida de la foto', () => {
 
         expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
         expect(screen.getByRole('alert')).toHaveTextContent('La imagen es demasiado grande.');
+    });
+});
+
+describe('MyAccountPage - archivo que no es una imagen real', () => {
+    it('un texto con extensión .jpg se rechaza en el cliente: sin vista previa ni botón de subir', async () => {
+        global.__imageFails = true;
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+
+        fireEvent.change(input, { target: { files: [new File(['no soy una imagen'], 'falso.jpg', { type: 'image/jpeg' })] } });
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('El archivo no es una imagen válida.');
+        expect(screen.queryByAltText('Vista previa')).not.toBeInTheDocument();
+        expect(screen.queryByText('Subir foto')).not.toBeInTheDocument();
+        expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+        expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    it('una imagen válida muestra la vista previa y habilita la subida', async () => {
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+
+        fireEvent.change(input, { target: { files: [new File(['img'], 'yo.png', { type: 'image/png' })] } });
+
+        expect(await screen.findByAltText('Vista previa')).toHaveAttribute('src', 'blob:preview');
+        expect(screen.getByText('Subir foto')).not.toBeDisabled();
     });
 });

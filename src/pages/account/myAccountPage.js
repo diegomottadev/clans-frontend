@@ -108,8 +108,20 @@ export default function MyAccountPage({ onProfileChange }) {
             e.target.value = '';
             return;
         }
+        const url = URL.createObjectURL(picked);
         setFile(picked);
-        setPreview(URL.createObjectURL(picked));
+        setPreview(url);
+        // El tipo MIME lo declara el navegador según la extensión: se comprueba que el
+        // contenido sea realmente una imagen intentando decodificarla (solo UX; el servidor valida igual)
+        const probe = new Image();
+        probe.onerror = () => {
+            URL.revokeObjectURL(url);
+            setFile(current => (current === picked ? null : current));
+            setPreview(current => (current === url ? null : current));
+            setAvatarError('El archivo no es una imagen válida.');
+            if (e.target) e.target.value = '';
+        };
+        probe.src = url;
     };
 
     const onUpload = async () => {
