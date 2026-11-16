@@ -1334,3 +1334,28 @@ pre[class*="language-"] {
     .my-account-photo-actions { display: flex; gap: 0.5rem; }
     .my-account-actions { display: flex; justify-content: flex-end; .p-button { width: auto; } }
 }
+
+/* Mi cuenta: progreso de subida de la foto (determinado mientras se envía,
+   indeterminado mientras el servidor procesa la imagen) */
+.my-account-upload { width: 100%; margin-bottom: 0.75rem; }
+.my-account-progress {
+    position: relative; height: 6px; border-radius: 3px; overflow: hidden;
+    background: #e3efe5;
+}
+.my-account-progress-fill {
+    height: 100%; border-radius: 3px; background: #3ab54a;
+    transition: width 0.2s ease-out;
+}
+.my-account-progress.is-indeterminate .my-account-progress-fill {
+    position: absolute; width: 40%;
+    animation: my-account-progress-indeterminate 1.2s ease-in-out infinite;
+}
+.my-account-progress-label { display: block; margin-top: 0.35rem; color: #6c757d; font-size: 0.8rem; }
+@keyframes my-account-progress-indeterminate {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .my-account-progress-fill { transition: none; }
+    .my-account-progress.is-indeterminate .my-account-progress-fill { animation: none; left: 0; width: 100%; opacity: 0.6; }
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Axios from 'axios';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
@@ -41,6 +41,10 @@ export default function MyAccountPage({ onProfileChange }) {
     const [preview, setPreview] = useState(null);
     const [avatarBusy, setAvatarBusy] = useState(false);
     const [avatarError, setAvatarError] = useState(null);
+    // Progreso de subida: null = sin subida; 0..100 = % enviado (100 = el servidor procesa)
+    const [uploadProgress, setUploadProgress] = useState(null);
+    const [avatarStatus, setAvatarStatus] = useState(null);
+    const cancelUpload = useRef(null);
     const currentAvatar = useAvatarUrl(!!account?.has_avatar, account?.avatar_version);
 
     const applyAccount = (data) => {
@@ -112,18 +116,38 @@ export default function MyAccountPage({ onProfileChange }) {
         if (!file) return;
         setAvatarBusy(true);
         setAvatarError(null);
+        setAvatarStatus(null);
+        setUploadProgress(0);
+        const source = Axios.CancelToken.source();
+        cancelUpload.current = source;
         const form = new FormData();
         form.append('avatar', file);
         try {
-            const { data } = await Axios.post(`${BASE_URL}/api/me/avatar`, form);
+            const { data } = await Axios.post(`${BASE_URL}/api/me/avatar`, form, {
+                cancelToken: source.token,
+                onUploadProgress: (e) => {
+                    if (e.total) setUploadProgress(Math.min(100, Math.round((e.loaded * 100) / e.total)));
+                },
+            });
             setFile(null);
             setPreview(null);
+            setAvatarStatus('Foto actualizada.');
             notify(data.data);
         } catch (err) {
-            setAvatarError(apiErrorMessage(err, 'No se pudo subir la foto.'));
+            if (Axios.isCancel(err)) {
+                setAvatarStatus('Subida cancelada.'); // se conserva el archivo para reintentar
+            } else {
+                setAvatarError(apiErrorMessage(err, 'No se pudo subir la foto.'));
+            }
         } finally {
+            cancelUpload.current = null;
+            setUploadProgress(null);
             setAvatarBusy(false);
         }
+    };
+
+    const onCancelUpload = () => {
+        if (cancelUpload.current) cancelUpload.current.cancel('Subida cancelada por el usuario');
     };
 
     const onRemove = async () => {
@@ -177,8 +201,33 @@ export default function MyAccountPage({ onProfileChange }) {
                         className="my-account-file" onChange={onPickFile} />
                     <small className="my-account-hint">JPG o PNG, hasta 2 MB. Se recorta en cuadrado.</small>
                     {avatarError && <small className="p-error my-account-msg" role="alert">{avatarError}</small>}
+                    {avatarStatus && <small className="my-account-msg my-account-ok" role="status">{avatarStatus}</small>}
+                    {uploadProgress !== null && (
+                        <div className="my-account-upload">
+                            <div
+                                className={`my-account-progress${uploadProgress >= 100 ? ' is-indeterminate' : ''}`}
+                                role="progressbar"
+                                aria-label="Progreso de subida de la foto"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={uploadProgress >= 100 ? undefined : uploadProgress}
+                            >
+                                <div className="my-account-progress-fill" style={uploadProgress >= 100 ? undefined : { width: `${uploadProgress}%` }} />
+                            </div>
+                            <small className="my-account-progress-label" aria-live="polite">
+                                {uploadProgress >= 100 ? 'Procesando imagen…' : `Subiendo… ${uploadProgress}%`}
+                            </small>
+                        </div>
+                    )}
                     <div className="my-account-photo-actions">
-                        {file && <Button type="button" label="Subir foto" icon="pi pi-upload" onClick={onUpload} disabled={avatarBusy} />}
+                        {file && (
+                            <Button type="button" label={uploadProgress !== null ? 'Subiendo…' : 'Subir foto'}
+                                icon={uploadProgress !== null ? 'pi pi-spin pi-spinner' : 'pi pi-upload'}
+                                onClick={onUpload} disabled={avatarBusy} />
+                        )}
+                        {uploadProgress !== null && (
+                            <Button type="button" label="Cancelar" icon="pi pi-times" className="p-button-text p-button-secondary" onClick={onCancelUpload} />
+                        )}
                         {!file && account.has_avatar && (
                             <Button type="button" label="Quitar foto" icon="pi pi-trash" className="p-button-outlined p-button-danger" onClick={onRemove} disabled={avatarBusy} />
                         )}

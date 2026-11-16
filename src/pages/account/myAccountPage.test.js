@@ -10,7 +10,7 @@ jest.mock('primereact/button', () => ({
 }));
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import axios from 'axios';
 import MyAccountPage from './myAccountPage';
 
@@ -25,6 +25,9 @@ beforeEach(() => {
     global.URL.createObjectURL = jest.fn(() => 'blob:preview');
     global.URL.revokeObjectURL = jest.fn();
     axios.get.mockResolvedValue({ data: { data: me() } });
+    // axios 0.19: cancelación con CancelToken (el automock devuelve undefined)
+    axios.CancelToken = { source: jest.fn(() => ({ token: 'tok-1', cancel: jest.fn() })) };
+    axios.isCancel = jest.fn(() => false);
 });
 
 const renderPage = (props = {}) => render(<MyAccountPage onProfileChange={jest.fn()} {...props} />);
@@ -170,5 +173,93 @@ describe('MyAccountPage', () => {
 
         await waitFor(() => expect(axios.delete).toHaveBeenCalledWith('http://api.test/api/me/avatar'));
         await waitFor(() => expect(onProfileChange).toHaveBeenCalledWith(expect.objectContaining({ has_avatar: false })));
+    });
+});
+
+describe('MyAccountPage - progreso de subida de la foto', () => {
+    let cancel;
+    let progress;
+    let resolveUpload;
+    let rejectUpload;
+
+    beforeEach(() => {
+        cancel = jest.fn();
+        axios.CancelToken = { source: jest.fn(() => ({ token: 'tok-1', cancel })) };
+        axios.isCancel = jest.fn((e) => !!(e && e.__cancelled));
+        axios.post.mockImplementation((url, body, config) => {
+            progress = config && config.onUploadProgress;
+            return new Promise((res, rej) => { resolveUpload = res; rejectUpload = rej; });
+        });
+    });
+
+    const pickAndUpload = async () => {
+        const input = await screen.findByLabelText('Elegir foto');
+        fireEvent.change(input, { target: { files: [new File(['img'], 'yo.png', { type: 'image/png' })] } });
+        fireEvent.click(screen.getByText('Subir foto'));
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+    };
+
+    it('muestra una barra de progreso con el porcentaje encima del botón y lo deshabilita', async () => {
+        renderPage();
+        await pickAndUpload();
+
+        expect(axios.post.mock.calls[0][2]).toEqual(expect.objectContaining({ cancelToken: 'tok-1' }));
+        act(() => progress({ loaded: 40, total: 100 }));
+
+        const bar = screen.getByRole('progressbar', { name: 'Progreso de subida de la foto' });
+        expect(bar).toHaveAttribute('aria-valuenow', '40');
+        expect(screen.getByText('Subiendo… 40%')).toBeInTheDocument();
+        const uploadButton = screen.getByText('Subiendo…');
+        expect(uploadButton).toBeDisabled();
+        // la barra va antes (encima) del botón
+        expect(bar.compareDocumentPosition(uploadButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('al llegar al 100% indica que el servidor está procesando (barra indeterminada)', async () => {
+        renderPage();
+        await pickAndUpload();
+
+        act(() => progress({ loaded: 100, total: 100 }));
+
+        const bar = screen.getByRole('progressbar', { name: 'Progreso de subida de la foto' });
+        expect(bar).not.toHaveAttribute('aria-valuenow');
+        expect(screen.getByText('Procesando imagen…')).toBeInTheDocument();
+    });
+
+    it('al terminar quita la barra y el botón vuelve a su estado', async () => {
+        renderPage();
+        await pickAndUpload();
+        act(() => progress({ loaded: 100, total: 100 }));
+
+        await act(async () => resolveUpload({ data: { data: me({ has_avatar: true, avatar_version: 'v3' }) } }));
+
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent('Foto actualizada.');
+    });
+
+    it('se puede cancelar: llama a cancel(), oculta la barra y conserva el archivo para reintentar', async () => {
+        renderPage();
+        await pickAndUpload();
+        act(() => progress({ loaded: 10, total: 100 }));
+
+        fireEvent.click(screen.getByText('Cancelar'));
+        expect(cancel).toHaveBeenCalled();
+        await act(async () => rejectUpload({ __cancelled: true }));
+
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent('Subida cancelada.');
+        expect(screen.getByText('Subir foto')).not.toBeDisabled();
+    });
+
+    it('si falla, oculta la barra y muestra el error', async () => {
+        renderPage();
+        await pickAndUpload();
+        act(() => progress({ loaded: 50, total: 100 }));
+
+        await act(async () => rejectUpload({ response: { status: 422, data: { avatar: ['La imagen es demasiado grande.'] } } }));
+
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+        expect(screen.getByRole('alert')).toHaveTextContent('La imagen es demasiado grande.');
     });
 });
