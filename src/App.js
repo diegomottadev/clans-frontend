@@ -389,7 +389,7 @@ function LoginRoute({ mostrarError, usuario, logout }) {
                 { label: 'Pago de docentes',                          icon: 'pi pi-fw pi-credit-card',  command: () => nav('/reports/reportPaymentsByTeacher') },
                 { label: 'Cobros por idioma y cursos',                icon: 'pi pi-fw pi-dollar',       command: () => nav('/reports/reportInvoicesByLanguajeCourse') },
                 { label: 'Informe completo por alumno',               icon: 'pi pi-fw pi-file',         command: () => nav('/reports/reportCompleteByStudent') },
-                { label: 'Analítico por alumno',                      icon: 'pi pi-fw pi-chart-pie',    command: () => nav('/reports/reportAnalyticByStudent') },
+                { label: 'Analítico por alumno',                      icon: 'pi pi-fw pi-id-card',      command: () => nav('/reports/reportAnalyticByStudent') },
             ]
         },
         {
