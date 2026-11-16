@@ -11,6 +11,7 @@ import { SelectButton } from 'primereact/selectbutton';
 import Error from '../../components/Error';
 import { Message } from 'primereact/message';
 import { Dialog } from 'primereact/dialog';
+import { sanitizeHtml } from '../../helpers/sanitizeHtml';
 
 const FileDownload = require('js-file-download');
 
@@ -446,7 +447,7 @@ export default function ReportLanguajeLevelCourse() {
                             <Button label="Cerrar" icon="pi pi-times" className="p-button-outlined p-button-secondary" onClick={() => setObsDialog(false)} />
                         }
                     >
-                        <div dangerouslySetInnerHTML={{ __html: obsContent }} style={{ lineHeight: 1.6, color: '#495057' }} />
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(obsContent) }} style={{ lineHeight: 1.6, color: '#495057' }} />
                     </Dialog>
 
                 </div>

@@ -15,6 +15,7 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { Editor } from 'primereact/editor';
 import Error from '../../components/Error';
 import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
+import { sanitizeHtml } from '../../helpers/sanitizeHtml';
 
 
 export default function EvalutionB() {
@@ -325,7 +326,7 @@ export default function EvalutionB() {
     const observationBodyTemplate = (rowData) => {
         return (
             <>
-                <div dangerouslySetInnerHTML={{__html: rowData.pivot.observaciones}} />
+                <div dangerouslySetInnerHTML={{__html: sanitizeHtml(rowData.pivot.observaciones)}} />
             </>
         );
     }
