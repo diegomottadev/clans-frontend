@@ -13,6 +13,7 @@ import Error from '../../components/Error';
 import { Dropdown } from 'primereact/dropdown';
 import Loading from '../../components/Loading';
 import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
+import { apiErrorMessage } from '../../helpers/apiErrors';
 
 export default function     UserPage(){
     let roles= [{
@@ -148,7 +149,7 @@ export default function     UserPage(){
             setUserDialog(false);
         } catch (error) {
         console.error(error);
-        toast.current.show({ severity: 'error', summary: 'Error', detail: 'Hubo un problema con el registro de usuario', life: 3000 });
+        toast.current.show({ severity: 'error', summary: 'Error', detail: apiErrorMessage(error, 'Hubo un problema con el registro de usuario'), life: 4000 });
         } 
     }
        
