@@ -17,6 +17,7 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import Error from '../../components/Error';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 
 export default function Evalution() {
@@ -232,11 +233,11 @@ export default function Evalution() {
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const value = e.target.value;
         const eventData = { filters: { name: { value } } };
         setLazyParams(prev => ({ ...prev, ...eventData, first: 0, page: 0 }));
-    };
+    }, 400);
 
     const openNew = () => {
         setEvaluation(emptyEvaluation);

@@ -10,6 +10,7 @@ import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
 import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 export default function Teacher(){
 
@@ -78,7 +79,7 @@ export default function Teacher(){
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const eventData = {filters:{
             completeName:{
                 value: e.target.value
@@ -88,7 +89,7 @@ export default function Teacher(){
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setTeacher(emptyTeacher);

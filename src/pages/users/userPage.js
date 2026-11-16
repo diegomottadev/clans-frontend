@@ -12,6 +12,7 @@ import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 import { Dropdown } from 'primereact/dropdown';
 import Loading from '../../components/Loading';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 export default function     UserPage(){
     let roles= [{
@@ -100,7 +101,7 @@ export default function     UserPage(){
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const eventData = {filters:{
             name:{
                 value: e.target.value
@@ -110,7 +111,7 @@ export default function     UserPage(){
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setUser(userEmpty);

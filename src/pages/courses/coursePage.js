@@ -14,6 +14,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
 import { Tag } from 'primereact/tag';
 import Error from '../../components/Error';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 export default function Course(props){
 
@@ -109,7 +110,7 @@ export default function Course(props){
     }
 
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const event = {filters:{
             name:{
                 value: e.target.value
@@ -119,7 +120,7 @@ export default function Course(props){
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
     
 
 

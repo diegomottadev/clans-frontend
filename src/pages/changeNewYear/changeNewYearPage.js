@@ -12,6 +12,7 @@ import Loading from '../../components/Loading';
 import { Checkbox } from 'primereact/checkbox';
 import { Tag } from 'primereact/tag';
 import Error from '../../components/Error';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 export default function ChangeYear() {
 
@@ -77,7 +78,7 @@ export default function ChangeYear() {
     }
 
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const event = {filters:{
             year:{
                 value: e.target.value
@@ -87,7 +88,7 @@ export default function ChangeYear() {
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
     async function generateNewYear() {
         try{
             setLoading(true);

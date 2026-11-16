@@ -14,6 +14,7 @@ import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { addLocale } from 'primereact/api';
 import Error from '../../../components/Error';
+import { useDebouncedCallback } from '../../../helpers/useDebouncedCallback';
 
 const FileDownload = require('js-file-download');
 
@@ -150,7 +151,7 @@ export default function Invoice() {
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
 
         const event = {
             filters: {
@@ -163,7 +164,7 @@ export default function Invoice() {
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setInvoice(emptyInvoice);
@@ -518,7 +519,7 @@ export default function Invoice() {
                         <Column field="student.apellido_nombre_completo" header="Apellido y Nombre" sortable ></Column>
                         <Column field="studentCourse.course.nombre" header="Curso" ></Column>
 
-                        <Column field="fee" header="Monto" body={priceBodyTemplate} sortable ></Column>
+                        <Column field="fee" sortField="amount" header="Monto" body={priceBodyTemplate} sortable ></Column>
 
                         <Column body={actionBodyTemplate}></Column>
                     </DataTable>

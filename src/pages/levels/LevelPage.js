@@ -13,6 +13,7 @@ import {BASE_URL} from '../../helpers/BaseUrl';
 import { sortQuery } from '../../helpers/listQuery';
 import { Dropdown } from 'primereact/dropdown';
 import Error from '../../components/Error';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 export default function Level({  usuario}) {
 
@@ -106,7 +107,7 @@ export default function Level({  usuario}) {
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const eventData = {filters:{
             name:{
                 value: e.target.value
@@ -116,7 +117,7 @@ export default function Level({  usuario}) {
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const formatCurrency = (value) => {
         return value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });

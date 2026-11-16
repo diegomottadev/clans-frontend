@@ -15,6 +15,7 @@ import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { addLocale } from 'primereact/api';
 import Error from '../../../components/Error';
+import { useDebouncedCallback } from '../../../helpers/useDebouncedCallback';
 const FileDownload = require('js-file-download');
 
 export default function PaymentTeacher(){
@@ -110,7 +111,7 @@ export default function PaymentTeacher(){
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         const eventData = {filters:{
             teacher:{
                 value: e.target.value
@@ -120,7 +121,7 @@ export default function PaymentTeacher(){
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setPaymentTeacher(emptyPaymentTeacher);

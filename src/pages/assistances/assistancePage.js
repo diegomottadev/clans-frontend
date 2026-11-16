@@ -15,6 +15,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { TabView, TabPanel } from 'primereact/tabview';
 import Error from '../../components/Error';
 import { addLocale } from 'primereact/api';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 
 export default function Assistance() {
@@ -215,10 +216,10 @@ export default function Assistance() {
         setLazyParams(_lazyParams);
     };
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         setSearchFilter(e.target.value);
         setLazyParams(p => ({ ...p, first: 0, page: 0 }));
-    };
+    }, 400);
 
 
     const openNew = () => {

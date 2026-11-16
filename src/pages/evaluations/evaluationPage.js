@@ -14,6 +14,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { Editor } from 'primereact/editor';
 import Error from '../../components/Error';
+import { useDebouncedCallback } from '../../helpers/useDebouncedCallback';
 
 
 export default function EvalutionB() {
@@ -140,7 +141,7 @@ export default function EvalutionB() {
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
         console.log(event);
 
         const event = {filters:{
@@ -151,7 +152,7 @@ export default function EvalutionB() {
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setEvaluation(emptyEvaluation);

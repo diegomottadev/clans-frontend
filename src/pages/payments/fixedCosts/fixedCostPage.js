@@ -15,6 +15,7 @@ import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { addLocale } from 'primereact/api';
 import Error from '../../../components/Error';
+import { useDebouncedCallback } from '../../../helpers/useDebouncedCallback';
 
 export default function FixedCost(){
 
@@ -108,7 +109,7 @@ export default function FixedCost(){
         setLazyParams(_lazyParams);
     }
 
-    const onFilter = (e) => {
+    const onFilter = useDebouncedCallback((e) => {
 
         const event = {filters:{
             typeExpense:{
@@ -119,7 +120,7 @@ export default function FixedCost(){
         _lazyParams['first'] = 0;
         _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
-    }
+    }, 400);
 
     const openNew = () => {
         setFixedCost(emptyFixedCost);
