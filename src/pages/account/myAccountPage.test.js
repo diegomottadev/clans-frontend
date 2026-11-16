@@ -2,6 +2,9 @@ import '@testing-library/jest-dom';
 
 jest.mock('axios');
 jest.mock('../../helpers/BaseUrl', () => ({ BASE_URL: 'http://api.test' }));
+// El navegador convierte la foto antes de subirla (canvas no existe en jsdom)
+jest.mock('../../helpers/prepareAvatar', () => ({ toAvatarJpeg: jest.fn() }));
+const isConverted = (f) => f instanceof File && f.name === 'avatar.jpg' && f.type === 'image/jpeg';
 jest.mock('primereact/inputtext', () => ({ InputText: (props) => <input {...props} /> }));
 jest.mock('primereact/button', () => ({
     Button: ({ label, onClick, disabled, type, icon, className }) => (
@@ -34,6 +37,9 @@ beforeEach(() => {
         get src() { return this._src; }
     };
     global.__imageFails = false;
+    // conversión simulada (el File se crea en el contexto de jsdom para que FormData lo acepte)
+    require('../../helpers/prepareAvatar').toAvatarJpeg.mockImplementation(
+        () => Promise.resolve(new File(['jpeg'], 'avatar.jpg', { type: 'image/jpeg' })));
 });
 
 const renderPage = (props = {}) => render(<MyAccountPage onProfileChange={jest.fn()} {...props} />);
@@ -130,9 +136,9 @@ describe('MyAccountPage', () => {
         renderPage();
         const input = await screen.findByLabelText('Elegir foto');
 
-        fireEvent.change(input, { target: { files: [new File(['<?php'], 'x.gif', { type: 'image/gif' })] } });
+        fireEvent.change(input, { target: { files: [new File(['<?php'], 'x.php', { type: 'application/x-php' })] } });
 
-        expect(await screen.findByRole('alert')).toHaveTextContent('JPG o PNG');
+        expect(await screen.findByRole('alert')).toHaveTextContent('El archivo debe ser una imagen.');
         expect(screen.queryByText('Subir foto')).not.toBeInTheDocument();
         expect(axios.post).not.toHaveBeenCalled();
     });
@@ -152,7 +158,9 @@ describe('MyAccountPage', () => {
         const [url, body] = axios.post.mock.calls[0];
         expect(url).toBe('http://api.test/api/me/avatar');
         expect(body).toBeInstanceOf(FormData);
-        expect(body.get('avatar')).toBe(file);
+        // se sube la versión convertida a JPEG, no el archivo original
+        expect(require('../../helpers/prepareAvatar').toAvatarJpeg).toHaveBeenCalledWith(file);
+        expect(isConverted(body.get('avatar'))).toBe(true);
         await waitFor(() => expect(onProfileChange).toHaveBeenCalledWith(expect.objectContaining({ has_avatar: true, avatar_version: 'v2' })));
     });
 
@@ -293,5 +301,35 @@ describe('MyAccountPage - archivo que no es una imagen real', () => {
 
         expect(await screen.findByAltText('Vista previa')).toHaveAttribute('src', 'blob:preview');
         expect(screen.getByText('Subir foto')).not.toBeDisabled();
+    });
+});
+
+describe('MyAccountPage - cualquier formato de foto', () => {
+    it('acepta un GIF o WebP: muestra vista previa y sube la versión JPEG convertida', async () => {
+        axios.post.mockResolvedValue({ data: { data: me({ has_avatar: true, avatar_version: 'v9' }) } });
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+        expect(input).toHaveAttribute('accept', 'image/*');
+
+        const gif = new File(['gif'], 'animado.gif', { type: 'image/gif' });
+        fireEvent.change(input, { target: { files: [gif] } });
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByText('Subir foto'));
+
+        await waitFor(() => expect(axios.post).toHaveBeenCalled());
+        expect(isConverted(axios.post.mock.calls[0][1].get('avatar'))).toBe(true);
+    });
+
+    it('si el navegador no puede convertirla, muestra el error y no sube nada', async () => {
+        require('../../helpers/prepareAvatar').toAvatarJpeg.mockImplementationOnce(() => Promise.reject(new Error('No se pudo leer la imagen. Si es HEIC (iPhone), conviértala a JPG.')));
+        renderPage();
+        const input = await screen.findByLabelText('Elegir foto');
+
+        fireEvent.change(input, { target: { files: [new File(['x'], 'foto.png', { type: 'image/png' })] } });
+        fireEvent.click(screen.getByText('Subir foto'));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo leer la imagen');
+        expect(axios.post).not.toHaveBeenCalled();
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
 });

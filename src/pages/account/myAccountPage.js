@@ -5,6 +5,7 @@ import { Button } from 'primereact/button';
 import { BASE_URL } from '../../helpers/BaseUrl';
 import { apiErrorMessage } from '../../helpers/apiErrors';
 import { validateAvatarFile } from '../../helpers/avatarFile';
+import { toAvatarJpeg } from '../../helpers/prepareAvatar';
 import { useAvatarUrl } from '../../components/UserMenu';
 
 const EMPTY_TEACHER = { firstName: '', lastName: '', dni: '', telphone: '', celphone: '', email: '', address: '' };
@@ -129,11 +130,20 @@ export default function MyAccountPage({ onProfileChange }) {
         setAvatarBusy(true);
         setAvatarError(null);
         setAvatarStatus(null);
+        // Cualquier formato que abra el navegador se convierte a JPEG 512x512 antes de subir
+        let converted;
+        try {
+            converted = await toAvatarJpeg(file);
+        } catch (err) {
+            setAvatarError(err.message || 'No se pudo leer la imagen.');
+            setAvatarBusy(false);
+            return;
+        }
         setUploadProgress(0);
         const source = Axios.CancelToken.source();
         cancelUpload.current = source;
         const form = new FormData();
-        form.append('avatar', file);
+        form.append('avatar', converted);
         try {
             const { data } = await Axios.post(`${BASE_URL}/api/me/avatar`, form, {
                 cancelToken: source.token,
@@ -209,9 +219,9 @@ export default function MyAccountPage({ onProfileChange }) {
                     <label htmlFor="avatar-file" className="p-button p-button-outlined p-button-sm my-account-pick">
                         <i className="pi pi-camera" aria-hidden="true" /> <span>Elegir imagen</span>
                     </label>
-                    <input id="avatar-file" type="file" accept="image/jpeg,image/png" aria-label="Elegir foto"
+                    <input id="avatar-file" type="file" accept="image/*" aria-label="Elegir foto"
                         className="my-account-file" onChange={onPickFile} />
-                    <small className="my-account-hint">JPG o PNG, hasta 2 MB. Se recorta en cuadrado.</small>
+                    <small className="my-account-hint">Cualquier foto (JPG, PNG, GIF, WebP…), hasta 20 MB. Se convierte y recorta en cuadrado.</small>
                     {avatarError && <small className="p-error my-account-msg" role="alert">{avatarError}</small>}
                     {avatarStatus && <small className="my-account-msg my-account-ok" role="status">{avatarStatus}</small>}
                     {uploadProgress !== null && (
