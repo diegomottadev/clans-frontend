@@ -1,5 +1,5 @@
 # ---- Build ----
-FROM node:18-alpine AS build
+FROM node:18.20.8-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -7,10 +7,12 @@ COPY . .
 # URL del backend (se inyecta en el build; tiene prioridad sobre .env.production)
 ARG REACT_APP_BASE_URL=http://localhost:8080
 ENV REACT_APP_BASE_URL=$REACT_APP_BASE_URL
+# No publicar el código fuente (source maps) en producción
+ENV GENERATE_SOURCEMAP=false
 RUN npm run build
 
 # ---- Serve ----
-FROM nginx:alpine
+FROM nginx:1.31.1-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
