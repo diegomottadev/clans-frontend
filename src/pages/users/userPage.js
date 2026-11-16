@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 import { Dropdown } from 'primereact/dropdown';
 import Loading from '../../components/Loading';
@@ -69,10 +70,10 @@ export default function     UserPage(){
             let url = `${BASE_URL}/api/users?page=${lazyParams.page+1}`;
             if(lazyParams.filters!==undefined && lazyParams.filters.name!==undefined){
                 let keys = Object.keys(lazyParams.filters);
-                url = `${BASE_URL}/api/users?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.name.value}`;
+                url = `${BASE_URL}/api/users?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.name.value)}`;
             }
             try {
-                await axios.get(url).then(({data: {data:  users}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  users}}) => {
                     setTotalRecords(users.meta.pagination.total);
                     setUsers(users.data)
                     setLoadingDatatable(false);
@@ -107,6 +108,7 @@ export default function     UserPage(){
         }};
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

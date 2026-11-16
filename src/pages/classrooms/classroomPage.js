@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import { BASE_URL } from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 
 export default function ClassroomPage() {
@@ -35,7 +36,7 @@ export default function ClassroomPage() {
     async function loadData() {
         try {
             setLoadingDatatable(true);
-            const { data: { data: result } } = await axios.get(`${BASE_URL}/api/classrooms?page=${lazyParams.page + 1}`);
+            const { data: { data: result } } = await axios.get(`${BASE_URL}/api/classrooms?page=${lazyParams.page + 1}${sortQuery(lazyParams)}`);
             setClassrooms(result.data);
             setTotalRecords(result.meta.pagination.total);
         } catch (err) {
@@ -47,6 +48,7 @@ export default function ClassroomPage() {
     }
 
     const onPage = (event) => setLazyParams({ ...lazyParams, ...event });
+    const onSort = (event) => setLazyParams({ ...lazyParams, ...event, first: 0, page: 0 });
 
     const openNew = () => {
         setClassroom(emptyClassroom);
@@ -167,7 +169,7 @@ export default function ClassroomPage() {
                     </div>
 
                     <DataTable ref={dt} value={classrooms} lazy paginator first={lazyParams.first} rows={10}
-                        totalRecords={totalRecords} onPage={onPage} loading={loadingDatatable}
+                        totalRecords={totalRecords} onPage={onPage} onSort={onSort} sortField={lazyParams.sortField} sortOrder={lazyParams.sortOrder} loading={loadingDatatable}
                         className="datatable-responsive datatable-compact" header={header} stripedRows rowHover>
                         <Column field="name" header="Nombre" sortable />
                         <Column field="capacity" header="Capacidad" body={capacityBody} style={{ width: '180px' }} />

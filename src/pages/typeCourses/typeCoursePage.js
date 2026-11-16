@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 
 export default function TypeCourse(){
@@ -38,10 +39,10 @@ export default function TypeCourse(){
             let url = `${BASE_URL}/api/typeCourses/?page=${lazyParams.page+1}`;
             if(lazyParams.filters!==undefined && lazyParams.filters.name!==undefined){
                 let keys = Object.keys(lazyParams.filters);
-                url = `${BASE_URL}/api/typeCourses/?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.name.value}`;
+                url = `${BASE_URL}/api/typeCourses/?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.name.value)}`;
             }
             try {
-                await axios.get(url).then(({data: {data:  typeCourses}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  typeCourses}}) => {
                     setTotalRecords(typeCourses.meta.pagination.total);
                     setTypeCourses(typeCourses.data)
                     setLoadingDatatable(false);
@@ -76,6 +77,7 @@ export default function TypeCourse(){
         }};
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

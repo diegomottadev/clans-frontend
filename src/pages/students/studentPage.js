@@ -8,6 +8,7 @@ import { InputText } from 'primereact/inputtext';
 import Loading from '../../components/Loading';
 import axios from 'axios';
 import { BASE_URL } from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import { addLocale } from 'primereact/api';
 import classNames from 'classnames';
 import { Calendar } from 'primereact/calendar';
@@ -196,7 +197,7 @@ export default function Student() {
                 setLoadingDatatable(true);
                 let url = `${BASE_URL}/api/students/?page=${lazyParams.page + 1}`;
                 if (lazyParams.filters !== undefined && lazyParams.filters.completeName !== undefined) {
-                    url += `&completeName=${lazyParams.filters.completeName.value}`;
+                    url += `&completeName=${encodeURIComponent(lazyParams.filters.completeName.value)}`;
                 }
                 if (statusFilter === 'noCourse') {
                     url += `&noCourse=1`;
@@ -212,7 +213,7 @@ export default function Student() {
                 if (courseFilter) {
                     url += `&courseId=${courseFilter}`;
                 }
-                await axios.get(url).then(({ data: { data: students } }) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({ data: { data: students } }) => {
                     setTotalRecords(students.meta.pagination.total);
                     setStudents(students.data);
                     setLoadingDatatable(false);
@@ -242,6 +243,7 @@ export default function Student() {
         const eventData = { filters: { completeName: { value: e.target.value } } };
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     };
 

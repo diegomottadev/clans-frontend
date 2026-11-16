@@ -7,6 +7,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import { BASE_URL } from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Loading from '../../components/Loading';
 import { Checkbox } from 'primereact/checkbox';
 import { Tag } from 'primereact/tag';
@@ -43,9 +44,9 @@ export default function ChangeYear() {
                 let url = `${BASE_URL}/api/schoolYears/?page=${lazyParams.page+1}`;
                 if(lazyParams.filters!==undefined && lazyParams.filters.year!==undefined){
                     let keys = Object.keys(lazyParams.filters);
-                    url = `${BASE_URL}/api/schoolYears/?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.year.value}`;
+                    url = `${BASE_URL}/api/schoolYears/?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.year.value)}`;
                 }
-                await axios.get(url).then(({data: {data: _academicYears}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data: _academicYears}}) => {
                     setTotalRecords(_academicYears.meta.pagination.total);
                     setAcademicYears(_academicYears.data)
                     setLoadingDatatable(false);
@@ -84,6 +85,7 @@ export default function ChangeYear() {
         }};
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
     async function generateNewYear() {

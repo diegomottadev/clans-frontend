@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import { BASE_URL } from '../../../helpers/BaseUrl';
+import { sortQuery } from '../../../helpers/listQuery';
 import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
@@ -100,9 +101,9 @@ export default function Invoice() {
             let url = `${BASE_URL}/api/invoices?page=${lazyParams.page + 1}`;
             if (lazyParams.filters !== undefined && lazyParams.filters.student !== undefined && lazyParams.filters.student !== "") {
                 let keys = Object.keys(lazyParams.filters);
-                url = `${BASE_URL}/api/invoices?page=${lazyParams.page + 1}&${keys[0]}=${lazyParams.filters.student.value}`;
+                url = `${BASE_URL}/api/invoices?page=${lazyParams.page + 1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.student.value)}`;
             }
-            await axios.get(url).then(({ data: { data: invoices } }) => {
+            await axios.get(url + sortQuery(lazyParams)).then(({ data: { data: invoices } }) => {
                 setTotalRecords(invoices.meta.pagination.total);
                 setInvoices(invoices.data);
                 setLoadingTable(false);
@@ -160,6 +161,7 @@ export default function Invoice() {
         };
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 
@@ -514,7 +516,7 @@ export default function Invoice() {
                         <Column field="dateIssue" header="Fecha de emisión" sortable ></Column>
                         <Column field="month" header="Mes" sortable ></Column>
                         <Column field="student.apellido_nombre_completo" header="Apellido y Nombre" sortable ></Column>
-                        <Column field="studentCourse.course.nombre" header="Curso" sortable ></Column>
+                        <Column field="studentCourse.course.nombre" header="Curso" ></Column>
 
                         <Column field="fee" header="Monto" body={priceBodyTemplate} sortable ></Column>
 

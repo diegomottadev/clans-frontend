@@ -95,7 +95,8 @@ export default function ReportCompleteByStudent() {
                 const mes = formatMonth(month)
                 const studentId = student
 
-                if(init === null & finish === null && student === null ){
+                // Sin alumno no hay informe; sin fechas el backend usa el año lectivo completo
+                if (student === null || student === undefined) {
                     console.log(init,finish,studentId)
                     setLoading(false);
                     return;

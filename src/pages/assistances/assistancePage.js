@@ -8,6 +8,7 @@ import { InputText } from 'primereact/inputtext';
 import Loading from '../../components/Loading';
 import axios from 'axios';
 import { BASE_URL } from '../../helpers/BaseUrl';
+import { appendSortParams } from '../../helpers/listQuery';
 import classNames from 'classnames';
 import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
@@ -163,9 +164,10 @@ export default function Assistance() {
                     params.set('dateAssistence', d.toISOString().split('T')[0]);
                 }
                 if (searchFilter && searchFilter.trim() !== '') {
-                    params.set('courseAssistence', searchFilter.trim());
+                    params.set('courseSearch', searchFilter.trim());
                 }
 
+                appendSortParams(params, lazyParams);
                 const url = `${BASE_URL}/api/assistances?${params.toString()}`;
                 const { data: { data: assistancesData } } = await axios.get(url);
 
@@ -189,7 +191,7 @@ export default function Assistance() {
                         const d = dateFilter instanceof Date ? dateFilter : new Date(dateFilter);
                         countParams.set('dateAssistence', d.toISOString().split('T')[0]);
                     }
-                    if (searchFilter && searchFilter.trim() !== '') countParams.set('courseAssistence', searchFilter.trim());
+                    if (searchFilter && searchFilter.trim() !== '') countParams.set('courseSearch', searchFilter.trim());
                     const { data: countData } = await axios.get(`${BASE_URL}/api/assistances/counts?${countParams.toString()}`);
                     setAssistanceCounts(countData?.data ?? null);
                 } catch (_) { /* silencioso */ }

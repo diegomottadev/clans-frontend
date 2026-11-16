@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 
 export default function Languaje(){
@@ -41,9 +42,9 @@ export default function Languaje(){
                 let url = `${BASE_URL}/api/languajes?page=${lazyParams.page+1}`;
                 if(lazyParams.filters!==undefined && lazyParams.filters.name!==undefined && lazyParams.filters.name!==""){
                     let keys = Object.keys(lazyParams.filters);
-                    url = `${BASE_URL}/api/languajes?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.name.value}`;
+                    url = `${BASE_URL}/api/languajes?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.name.value)}`;
                 }
-                await axios.get(url).then(({data: {data:  languajes}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  languajes}}) => {
                     setTotalRecords(languajes.meta.pagination.total);
                     setLanguajes(languajes.data);
                     setLoadingDatatable(false);
@@ -79,6 +80,7 @@ export default function Languaje(){
         }};
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

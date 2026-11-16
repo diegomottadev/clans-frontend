@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import Error from '../../components/Error';
 
 export default function Teacher(){
@@ -45,10 +46,10 @@ export default function Teacher(){
             let url = `${BASE_URL}/api/teachers/?page=${lazyParams.page+1}`;
             if(lazyParams.filters!==undefined && lazyParams.filters.completeName!==undefined){
                 let keys = Object.keys(lazyParams.filters);
-                url = `${BASE_URL}/api/teachers/?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.completeName.value}`;
+                url = `${BASE_URL}/api/teachers/?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.completeName.value)}`;
             }
             try {
-                await axios.get(url).then(({data: {data:  teachers}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  teachers}}) => {
                     setTotalRecords(teachers.meta.pagination.total);
                     setTeachers(teachers.data)
                     setLoadingDatatable(false);
@@ -85,6 +86,7 @@ export default function Teacher(){
         }};
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

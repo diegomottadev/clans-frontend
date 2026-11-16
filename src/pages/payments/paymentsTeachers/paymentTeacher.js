@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../../helpers/BaseUrl';
+import { sortQuery } from '../../../helpers/listQuery';
 import { InputNumber } from 'primereact/inputnumber';
 import Loading from '../../../components/Loading';
 import { Calendar } from 'primereact/calendar';
@@ -78,9 +79,9 @@ export default function PaymentTeacher(){
                 let url = `${BASE_URL}/api/paymentTeachers/?page=${lazyParams.page+1}`;
                 if(lazyParams.filters!==undefined && lazyParams.filters.teacher!==undefined){
                     let keys = Object.keys(lazyParams.filters);
-                    url = `${BASE_URL}/api/paymentTeachers/?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.teacher.value}`;
+                    url = `${BASE_URL}/api/paymentTeachers/?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.teacher.value)}`;
                 }
-                await axios.get(url).then(({data: {data:  paymentTeachers}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  paymentTeachers}}) => {
                     setTotalRecords(paymentTeachers.meta.pagination.total);
                     setPaymentTeachers(paymentTeachers.data)
                     setLoadingDatatable(false);
@@ -117,6 +118,7 @@ export default function PaymentTeacher(){
         }};
         let _lazyParams = { ...lazyParams, ...eventData };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

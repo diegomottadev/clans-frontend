@@ -22,3 +22,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Ignorar carpetas y archivos que empiecen con punto
+.*
+!.gitignore
+!.dockerignore

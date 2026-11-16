@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import axios from 'axios';
 import {BASE_URL} from '../../../helpers/BaseUrl';
+import { sortQuery } from '../../../helpers/listQuery';
 import { InputNumber } from 'primereact/inputnumber';
 import Loading from '../../../components/Loading';
 import { Calendar } from 'primereact/calendar';
@@ -79,9 +80,9 @@ export default function FixedCost(){
             let url = `${BASE_URL}/api/fixedCosts?page=${lazyParams.page+1}`;
             if(lazyParams.filters!==undefined && lazyParams.filters.typeExpense!==undefined && lazyParams.filters.typeExpense!==""){
                 let keys = Object.keys(lazyParams.filters);
-                url = `${BASE_URL}/api/fixedCosts?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.typeExpense.value}`;
+                url = `${BASE_URL}/api/fixedCosts?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.typeExpense.value)}`;
             }
-            await axios.get(url).then(({data: {data:  fixedCosts}}) => {
+            await axios.get(url + sortQuery(lazyParams)).then(({data: {data:  fixedCosts}}) => {
                 setTotalRecords(fixedCosts.meta.pagination.total);
                 setFixedCosts(fixedCosts.data);
                 setLoadingTable(false);
@@ -116,6 +117,7 @@ export default function FixedCost(){
         }};
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
 

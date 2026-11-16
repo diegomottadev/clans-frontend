@@ -9,6 +9,7 @@ import { InputText } from 'primereact/inputtext';
 import Loading from '../../components/Loading';
 import axios from 'axios';
 import {BASE_URL} from '../../helpers/BaseUrl';
+import { sortQuery } from '../../helpers/listQuery';
 import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
 import { Tag } from 'primereact/tag';
@@ -76,9 +77,9 @@ export default function Course(props){
                 let url = `${BASE_URL}/api/courses/?page=${lazyParams.page+1}`;
                 if(lazyParams.filters!==undefined && lazyParams.filters.name!==undefined){
                     let keys = Object.keys(lazyParams.filters);
-                    url = `${BASE_URL}/api/courses/?page=${lazyParams.page+1}&${keys[0]}=${lazyParams.filters.name.value}`;
+                    url = `${BASE_URL}/api/courses/?page=${lazyParams.page+1}&${keys[0]}=${encodeURIComponent(lazyParams.filters.name.value)}`;
                 }
-                await axios.get(url).then(({data: {data: courses}}) => {
+                await axios.get(url + sortQuery(lazyParams)).then(({data: {data: courses}}) => {
                     setTotalRecords(courses.meta.pagination.total);
                     setCourses(courses.data);
                     setLoadingDatatable(false);
@@ -116,6 +117,7 @@ export default function Course(props){
         }};
         let _lazyParams = { ...lazyParams, ...event };
         _lazyParams['first'] = 0;
+        _lazyParams['page'] = 0;
         setLazyParams(_lazyParams);
     }
     

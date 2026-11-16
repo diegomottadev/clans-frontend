@@ -8,6 +8,7 @@ import { InputText } from 'primereact/inputtext';
 import Loading from '../../components/Loading';
 import axios from 'axios';
 import { BASE_URL } from '../../helpers/BaseUrl';
+import { appendSortParams } from '../../helpers/listQuery';
 import { addLocale } from 'primereact/api';
 import classNames from 'classnames';
 import { Calendar } from 'primereact/calendar';
@@ -173,6 +174,7 @@ export default function Evalution() {
                     const d = dateFilter instanceof Date ? dateFilter : new Date(dateFilter);
                     params.set('date', d.toISOString().split('T')[0]);
                 }
+                appendSortParams(params, lazyParams);
                 const url = `${BASE_URL}/api/evaluations?${params.toString()}`;
                 const { data } = await axios.get(url);
                 // Aceptar respuesta paginada { data: { data: [], meta: { pagination: { total } } } } o array directo { data: [] }
