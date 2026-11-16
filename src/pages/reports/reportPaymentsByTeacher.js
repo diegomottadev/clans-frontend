@@ -284,6 +284,7 @@ export default function ReportPaymentsByTeacher() {
                     <Column field="date" header="Fecha" body={dateBodyTemplate}></Column>
                     <Column field="amount" header="Monto"></Column>
                     <Column field="teacher.data.completeName" header="Docente"></Column>
+                    <Column field="observation" header="Observación"></Column>
                     <Column body={actionBodyTemplate} header="" style={{ width: '5rem' }}></Column>
                     </DataTable>
                 </div>

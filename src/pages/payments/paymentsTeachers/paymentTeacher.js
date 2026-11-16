@@ -6,6 +6,7 @@ import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
 import axios from 'axios';
 import {BASE_URL} from '../../../helpers/BaseUrl';
 import { sortQuery } from '../../../helpers/listQuery';
@@ -35,6 +36,7 @@ export default function PaymentTeacher(){
         teacher: null,
         date: null,
         amount: 0,
+        observation: '',
     };
     const [teachers, setTeachers] = useState(null);
     const [paymentTeachers, setPaymentTeachers] = useState(null);
@@ -176,6 +178,7 @@ export default function PaymentTeacher(){
             id: _paymentTeacher.id,
             teacher: _paymentTeacher.teacher_id,
             amount: _paymentTeacher.amount,
+            observation: _paymentTeacher.observation || '',
             date :_paymentTeacher.date != null ? new Date(_paymentTeacher.date):null,
         };
         setPaymentTeacher({ ...editPaymentTeacher });
@@ -329,6 +332,7 @@ export default function PaymentTeacher(){
                         <Column field="amount" header="Monto"   body={priceBodyTemplate} sortable ></Column>
                         <Column field="date" header="Fecha" sortable ></Column>
                         <Column field="teacher.data.completeName" header="Docente" sortable ></Column>
+                        <Column field="observation" header="Observación" ></Column>
                         <Column body={actionBodyTemplate}></Column>
                     </DataTable>
 
@@ -348,6 +352,10 @@ export default function PaymentTeacher(){
                                 <label htmlFor="amount">Monto</label>
                                 <InputNumber id="amount" value={paymentTeacher.amount} onValueChange={(e) => onInputChange(e, 'amount')} mode="currency" currency="ARS" locale="es-AR" className={classNames({ 'p-invalid': submitted && !paymentTeacher.amount })}/>
                                 {submitted && !paymentTeacher.amount && <small className="p-invalid">Monto es requerido.</small>}
+                        </div>
+                        <div className="p-field">
+                            <label htmlFor="observation">Observación</label>
+                            <InputTextarea id="observation" value={paymentTeacher.observation || ''} onChange={(e) => onInputChange(e, 'observation')} rows={3} autoResize maxLength={500} />
                         </div>
                     </Dialog>
                     

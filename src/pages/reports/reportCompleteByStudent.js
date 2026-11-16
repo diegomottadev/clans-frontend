@@ -194,6 +194,47 @@ export default function ReportCompleteByStudent() {
         </div>
     );
 
+    // Resumen: cantidad de registros por tipo de asistencia
+    const assistanceColors = {
+        'Presente': '#3ab54a',
+        'Presente Online': '#2196f3',
+        'Ausente': '#e53935',
+        'Demora': '#fb8c00',
+        'Se Retiro': '#8e24aa',
+    };
+    const assistanceSummary = (() => {
+        const counts = {};
+        (assistances || []).forEach(a => {
+            const name = a?.pivot?.nameTypeAssistance?.nombre || 'Sin tipo';
+            counts[name] = (counts[name] || 0) + 1;
+        });
+        return Object.keys(counts)
+            .map(name => ({ name, cant: counts[name] }))
+            .sort((x, y) => y.cant - x.cant);
+    })();
+    const totalAssistances = (assistances || []).length;
+
+    const assistanceSummaryBox = totalAssistances > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontWeight: 'normal' }}>
+            <div style={{ flex: '1 1 140px', padding: '0.75rem 1rem', borderRadius: 10, background: '#f4f6f5', borderLeft: '4px solid #1a3320' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6c757d' }}>Total de clases</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a3320' }}>{totalAssistances}</div>
+            </div>
+            {assistanceSummary.map(t => {
+                const color = assistanceColors[t.name] || '#607d8b';
+                return (
+                    <div key={t.name} style={{ flex: '1 1 140px', padding: '0.75rem 1rem', borderRadius: 10, background: '#f9fafb', borderLeft: `4px solid ${color}` }}>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6c757d' }}>{t.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 800, color }}>{t.cant}</span>
+                            <span style={{ fontSize: '0.8rem', color: '#6c757d' }}>{Math.round((t.cant * 100) / totalAssistances)}%</span>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
     const headerEvaluations = (
         <div className="p-d-flex p-ai-center" style={{ gap: '0.5rem' }}>
             <i className="pi pi-file-edit" style={{ color: '#3ab54a', fontSize: '1.1rem' }}></i>
@@ -262,7 +303,7 @@ export default function ReportCompleteByStudent() {
                     { !chargingData && (
                         <div>
                             <div className="card" style={{ borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: 'none' }}>
-                                <DataTable value={assistances} className="datatable-responsive datatable-compact" header={headerAssistances} stripedRows rowHover>
+                                <DataTable value={assistances} className="datatable-responsive datatable-compact" header={<>{headerAssistances}{assistanceSummaryBox && <div style={{ marginTop: '1rem' }}>{assistanceSummaryBox}</div>}</>} stripedRows rowHover>
                                 <Column field="fecha" header="Fecha"></Column>
                                 <Column field="course.nombre" header="Curso"></Column>
                                 <Column field="pivot.nameTypeAssistance.nombre" header="Tipo de asistencia"></Column>
