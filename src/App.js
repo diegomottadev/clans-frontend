@@ -33,7 +33,7 @@ import FixedCost from './pages/payments/fixedCosts/fixedCostPage';
 import PaymentTeacher from './pages/payments/paymentsTeachers/paymentTeacher';
 import Invoice from './pages/payments/chargingFees/invoicePage';
 import Assistance from './pages/assistances/assistancePage';
-import { setToken, deleteToken, initAxiosInterceptors, getToken } from './helpers/auth-helpers';
+import { setToken, initAxiosInterceptors, getToken } from './helpers/auth-helpers';
 import Axios from 'axios';
 import Login from './pages/login/Login';
 import Error from './components/Error';
@@ -58,6 +58,7 @@ import ClassSchedulePage from './pages/classSchedules/classSchedulePage';
 import CalendarDashboardPage from './pages/calendar/calendarDashboardPage';
 import MyAccountPage from './pages/account/myAccountPage';
 import UserMenu from './components/UserMenu';
+import { logoutSession, AFTER_LOGOUT_PATH } from './helpers/logout';
 
 /* npm uninstall node-sass
 npm install sass */
@@ -124,10 +125,10 @@ export default function App() {
     }
 
 
-    function logout() {
+    async function logout() {
+        await logoutSession();
         setUsuario(null);
-        deleteToken();
-        window.location.href = `${window.location.protocol}//${window.location.host}/#/`;
+        window.location.href = AFTER_LOGOUT_PATH;
     }
 
     // "Mi cuenta" guardó cambios: refrescar nombre y foto del topbar
